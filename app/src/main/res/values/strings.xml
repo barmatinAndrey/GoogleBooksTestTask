@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">GoogleBooksTestTask</string>
+
+    <string name="server_client_id">991168137299-klcd0abkbclpe5rcnk96sari4ucl47v2.apps.googleusercontent.com</string>
+    <string name="client_secret">wnUMLjczHFKVwdw0xCPW2Mi1</string>
+</resources>
