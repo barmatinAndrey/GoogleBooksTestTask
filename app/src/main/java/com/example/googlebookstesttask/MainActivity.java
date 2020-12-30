@@ -1,9 +1,11 @@
 package com.example.googlebookstesttask;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
+import android.security.KeyPairGeneratorSpec;
+import android.security.keystore.KeyProperties;
+import android.util.Log;
 
 import com.example.googlebookstesttask.Model.AccessTokenResponse;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -12,15 +14,16 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
+import java.math.BigInteger;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.util.Calendar;
+import java.util.Random;
+import javax.security.auth.x500.X500Principal;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -29,6 +32,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
+import static com.example.googlebookstesttask.Utils.AnyUtils.rsaDecrypt;
+import static com.example.googlebookstesttask.Utils.AnyUtils.rsaEncrypt;
 
 public class MainActivity extends AppCompatActivity {
     private GoogleSignInClient mGoogleSignInClient;
@@ -48,6 +54,37 @@ public class MainActivity extends AppCompatActivity {
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
         signInButton.setOnClickListener(v -> signIn());
+
+        try {
+            //Generate a keypair and store it in the KeyStore
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+
+            Calendar start = Calendar.getInstance();
+            Calendar end = Calendar.getInstance();
+            end.add(Calendar.YEAR, 10);
+            KeyPairGeneratorSpec spec = new KeyPairGeneratorSpec.Builder(this)
+                    .setAlias("MyKeyAlias")
+                    .setSubject(new X500Principal("CN=MyKeyName, O=Android Authority"))
+                    .setSerialNumber(new BigInteger(1024, new Random()))
+                    .setStartDate(start.getTime())
+                    .setEndDate(end.getTime())
+                    //.setEncryptionRequired() //on API level 18, encrypted at rest, requires lock screen to be set up, changing lock screen removes key
+                    .build();
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
+            keyPairGenerator.initialize(spec);
+            keyPairGenerator.generateKeyPair();
+
+            //Encryption test
+            final byte[] encryptedBytes = rsaEncrypt("666666666666666666666666666666666666666666666".getBytes("UTF-8"));
+            final byte[] decryptedBytes = rsaDecrypt(encryptedBytes);
+            final String decryptedString = new String(decryptedBytes, "UTF-8");
+            Log.e("MyApp", "Decrypted string is " + decryptedString);
+        }
+        catch (Throwable e) {
+            e.printStackTrace();
+        }
+
 
     }
 
@@ -127,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(accessTokenResponse.getRefresh_token());
                 System.out.println(accessTokenResponse.getScope());
                 System.out.println(accessTokenResponse.getToken_type());
+
             }
         });
 
