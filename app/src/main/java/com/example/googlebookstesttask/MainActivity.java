@@ -2,9 +2,12 @@ package com.example.googlebookstesttask;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyProperties;
+import android.util.Base64;
 import android.util.Log;
 
 import com.example.googlebookstesttask.Model.AccessTokenResponse;
@@ -40,12 +43,18 @@ public class MainActivity extends AppCompatActivity {
     private GoogleSignInClient mGoogleSignInClient;
     private SignInButton signInButton;
     private int RC_SIGN_IN = 1;
+    public static final String APP_PREFERENCES_ACCESS_TOKEN = "accessToken";
+    public static final String APP_PREFERENCES_REFRESH_TOKEN = "refreshToken";
+    public static SharedPreferences mSettings;
+    public static String accessToken;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         signInButton = findViewById(R.id.sign_in_button);
+
+        mSettings = PreferenceManager.getDefaultSharedPreferences(this);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestServerAuthCode(getString(R.string.server_client_id))
@@ -59,27 +68,36 @@ public class MainActivity extends AppCompatActivity {
             //Generate a keypair and store it in the KeyStore
             KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
             keyStore.load(null);
+            if (!keyStore.containsAlias("MyKeyAlias")) {
+                Calendar start = Calendar.getInstance();
+                Calendar end = Calendar.getInstance();
+                end.add(Calendar.YEAR, 10);
+                KeyPairGeneratorSpec spec = new KeyPairGeneratorSpec.Builder(this)
+                        .setAlias("MyKeyAlias")
+                        .setSubject(new X500Principal("CN=MyKeyName, O=Android Authority"))
+                        .setSerialNumber(new BigInteger(1024, new Random()))
+                        .setStartDate(start.getTime())
+                        .setEndDate(end.getTime())
+                        //.setEncryptionRequired() //on API level 18, encrypted at rest, requires lock screen to be set up, changing lock screen removes key
+                        .build();
+                KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
+                keyPairGenerator.initialize(spec);
+                keyPairGenerator.generateKeyPair();
 
-            Calendar start = Calendar.getInstance();
-            Calendar end = Calendar.getInstance();
-            end.add(Calendar.YEAR, 10);
-            KeyPairGeneratorSpec spec = new KeyPairGeneratorSpec.Builder(this)
-                    .setAlias("MyKeyAlias")
-                    .setSubject(new X500Principal("CN=MyKeyName, O=Android Authority"))
-                    .setSerialNumber(new BigInteger(1024, new Random()))
-                    .setStartDate(start.getTime())
-                    .setEndDate(end.getTime())
-                    //.setEncryptionRequired() //on API level 18, encrypted at rest, requires lock screen to be set up, changing lock screen removes key
-                    .build();
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
-            keyPairGenerator.initialize(spec);
-            keyPairGenerator.generateKeyPair();
+                //Encryption test
+                final byte[] encryptedBytes = rsaEncrypt("666666666666666666666666666666666666666666666".getBytes("UTF-8"));
+                final byte[] decryptedBytes = rsaDecrypt(encryptedBytes);
+                final String decryptedString = new String(decryptedBytes, "UTF-8");
+                Log.e("MyApp", "Decrypted string is " + decryptedString);
+            }
+            else {
+                if (mSettings.contains(APP_PREFERENCES_ACCESS_TOKEN)) {
+                    byte[] accessTokenEncryptedBytes = Base64.decode(mSettings.getString(APP_PREFERENCES_ACCESS_TOKEN, ""), Base64.NO_WRAP);
+                    final byte[] accessTokenDecryptedBytes = rsaDecrypt(accessTokenEncryptedBytes);
+                    accessToken = new String(accessTokenDecryptedBytes, "UTF-8");
+                }
 
-            //Encryption test
-            final byte[] encryptedBytes = rsaEncrypt("666666666666666666666666666666666666666666666".getBytes("UTF-8"));
-            final byte[] decryptedBytes = rsaDecrypt(encryptedBytes);
-            final String decryptedString = new String(decryptedBytes, "UTF-8");
-            Log.e("MyApp", "Decrypted string is " + decryptedString);
+            }
         }
         catch (Throwable e) {
             e.printStackTrace();
@@ -95,12 +113,10 @@ public class MainActivity extends AppCompatActivity {
         // Check for existing Google Sign In account, if the user is already signed in
         // the GoogleSignInAccount will be non-null.
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        System.out.println("Аккаунт: "+account);
-        if (account!=null) {
-            System.out.println("СурверАусКод" + account.getServerAuthCode());
-           // getAccessToken(account.getServerAuthCode());
+        if (account!=null && accessToken!=null) {
+            Intent intent = new Intent(this, BookSearchActivity.class);
+            startActivity(intent);
         }
-//        updateUI(account);
     }
 
     private void signIn() {
@@ -165,6 +181,22 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(accessTokenResponse.getScope());
                 System.out.println(accessTokenResponse.getToken_type());
 
+                SharedPreferences.Editor edit = mSettings.edit();
+                if (accessTokenResponse.getAccess_token()!=null)
+                    edit.putString(APP_PREFERENCES_ACCESS_TOKEN, Base64.encodeToString(rsaEncrypt(accessTokenResponse.getAccess_token().getBytes("UTF-8")), Base64.NO_WRAP));
+                if (accessTokenResponse.getRefresh_token()!=null)
+                    edit.putString(APP_PREFERENCES_REFRESH_TOKEN, Base64.encodeToString(rsaEncrypt(accessTokenResponse.getRefresh_token().getBytes("UTF-8")), Base64.NO_WRAP));
+                else
+                    edit.putString(APP_PREFERENCES_REFRESH_TOKEN, Base64.encodeToString(rsaEncrypt("1//0cYyWCJMLVpSMCgYIARAAGAwSNwF-L9IrQnhWrKh2EFvaDF7ssNpFSRJqKfWiU-SGNjXjvJII-Q1PZADCKSeedscY42gdsiCEEoo".getBytes("UTF-8")), Base64.DEFAULT));
+                edit.apply();
+
+                System.out.println("ACCESS: "+ mSettings.getString(APP_PREFERENCES_ACCESS_TOKEN, "нихуа"));
+                System.out.println("REFRESH: "+ mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, "нихуа"));
+                byte[] array = Base64.decode(mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, "нихуа"), Base64.NO_WRAP);
+                final byte[] decryptedBytes = rsaDecrypt(array);
+                final String decryptedString = new String(decryptedBytes, "UTF-8");
+                System.out.println("REFRESH_DECRYPTED: "+ decryptedString);
+                System.out.println("СОВПАЛО!!!! "+decryptedString.equals("1//0cYyWCJMLVpSMCgYIARAAGAwSNwF-L9IrQnhWrKh2EFvaDF7ssNpFSRJqKfWiU-SGNjXjvJII-Q1PZADCKSeedscY42gdsiCEEoo"));
             }
         });
 
