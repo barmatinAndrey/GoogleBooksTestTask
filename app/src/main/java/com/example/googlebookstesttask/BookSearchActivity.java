@@ -4,13 +4,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.os.Bundle;
-
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import io.reactivex.disposables.CompositeDisposable;
+
 
 public class BookSearchActivity extends AppCompatActivity {
     private TabLayout tabs;
     private ViewPager2 pager;
+
+    private CompositeDisposable mCompositeDisposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,7 +24,6 @@ public class BookSearchActivity extends AppCompatActivity {
 
         pager.setAdapter(new ViewPagerAdapter(this));
         new TabLayoutMediator(tabs, pager, (tab, position) -> tab.setText(getResources().getStringArray(R.array.tabs)[position])).attach();
-
 
     }
 }
