@@ -3,4 +3,12 @@
 
     <string name="server_client_id">991168137299-klcd0abkbclpe5rcnk96sari4ucl47v2.apps.googleusercontent.com</string>
     <string name="client_secret">wnUMLjczHFKVwdw0xCPW2Mi1</string>
+
+    <string-array name="tabs">
+        <item>@string/search</item>
+        <item>@string/favorites</item>
+    </string-array>
+
+    <string name="search">Поиск</string>
+    <string name="favorites">Избранное</string>
 </resources>
