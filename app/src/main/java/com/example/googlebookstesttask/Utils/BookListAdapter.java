@@ -1,5 +1,6 @@
 package com.example.googlebookstesttask.Utils;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,14 +12,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.googlebookstesttask.Model.BooksApiResponse;
 import com.example.googlebookstesttask.R;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
 public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHolder> {
-    private List<BooksApiResponse.items> itemsList;
+    private Context context;
+    private List<BooksApiResponse.BookItem> bookItemList;
 
-    public BookListAdapter(BooksApiResponse booksApiResponse) {
-        itemsList = booksApiResponse.getItemsList();
+    public BookListAdapter(Context context, BooksApiResponse booksApiResponse) {
+        this.context = context;
+        bookItemList = booksApiResponse.getItems();
     }
 
     @Override
@@ -29,18 +33,23 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.title.setText(itemsList.get(position).getVolumeInfo().getTitle());
+        Picasso.with(context)
+                .load(bookItemList.get(position).getVolumeInfo().getImageLinks().getThumbnail())
+                .into(holder.thumbnail);
+        holder.title.setText(bookItemList.get(position).getVolumeInfo().getTitle());
         String authors = "";
-        for (String author: itemsList.get(position).getVolumeInfo().getAuthors()) {
-            authors = authors + author + ", ";
+        if (bookItemList.get(position).getVolumeInfo().getAuthors()!=null) {
+            for (String author : bookItemList.get(position).getVolumeInfo().getAuthors()) {
+                authors = authors + author + ", ";
+            }
+            holder.author.setText(authors.substring(0, authors.length() - 2));
         }
-        holder.author.setText(authors.substring(0, authors.length()-2));
 
     }
 
     @Override
     public int getItemCount() {
-        return itemsList.size();
+        return bookItemList.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

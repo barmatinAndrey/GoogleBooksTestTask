@@ -71,7 +71,7 @@ public class BookListFragment extends Fragment {
     }
 
     private void handleResponse(BooksApiResponse booksApiResponse) {
-        BookListAdapter adapter = new BookListAdapter(booksApiResponse);
+        BookListAdapter adapter = new BookListAdapter(getContext(), booksApiResponse);
         recyclerView.setAdapter(adapter);
     }
 

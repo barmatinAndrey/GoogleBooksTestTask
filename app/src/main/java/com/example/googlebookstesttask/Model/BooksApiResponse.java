@@ -4,15 +4,7 @@ import java.util.List;
 
 public class BooksApiResponse {
     private String totalItems;
-    private List<items> itemsList;
-
-    public List<items> getItemsList() {
-        return itemsList;
-    }
-
-    public void setItemsList(List<items> itemsList) {
-        this.itemsList = itemsList;
-    }
+    private List<BookItem> items;
 
     public String getTotalItems() {
         return totalItems;
@@ -22,16 +14,26 @@ public class BooksApiResponse {
         this.totalItems = totalItems;
     }
 
-    public class items {
+    public List<BookItem> getItems() {
+        return items;
+    }
+
+    public void setItems(List<BookItem> items) {
+        this.items = items;
+    }
+
+
+    public class BookItem {
         private volumeInfo volumeInfo;
 
-        public items.volumeInfo getVolumeInfo() {
+        public BookItem.volumeInfo getVolumeInfo() {
             return volumeInfo;
         }
 
-        public void setVolumeInfo(items.volumeInfo volumeInfo) {
+        public void setVolumeInfo(BookItem.volumeInfo volumeInfo) {
             this.volumeInfo = volumeInfo;
         }
+
 
         public class volumeInfo {
             private String title;
