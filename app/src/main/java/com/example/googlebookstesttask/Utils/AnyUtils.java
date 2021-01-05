@@ -1,7 +1,10 @@
 package com.example.googlebookstesttask.Utils;
 
+import android.util.Base64;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
@@ -65,4 +68,11 @@ public class AnyUtils {
 
         return decryptedBytes;
     }
+
+    public static String getDecryptedString(String encryptedString) throws UnsupportedEncodingException {
+        byte[] encryptedBytes = Base64.decode(encryptedString, Base64.NO_WRAP);
+        final byte[] decryptedBytes = rsaDecrypt(encryptedBytes);
+        return new String(decryptedBytes, "UTF-8");
+    }
+
 }

@@ -1,6 +1,8 @@
 package com.example.googlebookstesttask;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -39,6 +41,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import static com.example.googlebookstesttask.Utils.AnyUtils.getDecryptedString;
 import static com.example.googlebookstesttask.Utils.AnyUtils.rsaDecrypt;
 import static com.example.googlebookstesttask.Utils.AnyUtils.rsaEncrypt;
 
@@ -50,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String APP_PREFERENCES_REFRESH_TOKEN = "refreshToken";
     public static SharedPreferences mSettings;
     public static String accessToken;
+    public static String refreshToken;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +74,6 @@ public class MainActivity extends AppCompatActivity {
         signInButton.setOnClickListener(v -> signIn());
 
         try {
-            //Generate a keypair and store it in the KeyStore
             KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
             keyStore.load(null);
             if (!keyStore.containsAlias("MyKeyAlias")) {
@@ -84,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
                         .setStartDate(start.getTime())
                         .setEndDate(end.getTime())
                         .build();
-                KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
+                KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
                 keyPairGenerator.initialize(spec);
                 keyPairGenerator.generateKeyPair();
 
@@ -95,18 +98,17 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("MyApp", "Decrypted string is " + decryptedString);
             }
             else {
-                if (mSettings.contains(APP_PREFERENCES_ACCESS_TOKEN)) {
-                    byte[] accessTokenEncryptedBytes = Base64.decode(mSettings.getString(APP_PREFERENCES_ACCESS_TOKEN, ""), Base64.NO_WRAP);
-                    final byte[] accessTokenDecryptedBytes = rsaDecrypt(accessTokenEncryptedBytes);
-                    accessToken = new String(accessTokenDecryptedBytes, "UTF-8");
-                }
-
+                if (mSettings.contains(APP_PREFERENCES_ACCESS_TOKEN))
+                    accessToken = getDecryptedString(mSettings.getString(APP_PREFERENCES_ACCESS_TOKEN, ""));
+                if (mSettings.contains(APP_PREFERENCES_REFRESH_TOKEN))
+                    refreshToken = getDecryptedString(mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, ""));
+                System.out.println(accessToken);
+                System.out.println(refreshToken);
             }
         }
         catch (Throwable e) {
             e.printStackTrace();
         }
-
 
     }
 
@@ -114,12 +116,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Check for existing Google Sign In account, if the user is already signed in
-        // the GoogleSignInAccount will be non-null.
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        if (account!=null && accessToken!=null) {
-//            Intent intent = new Intent(this, BookSearchActivity.class);
-//            startActivity(intent);
+        if (account!=null && refreshToken!=null) {
+            Intent intent = new Intent(this, BookSearchActivity.class);
+            startActivity(intent);
         }
     }
 
@@ -131,10 +131,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
-            // The Task returned from this call is always completed, no need to attach
-            // a listener.
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             handleSignInResult(task);
         }
@@ -143,18 +140,13 @@ public class MainActivity extends AppCompatActivity {
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            getAccessToken(account.getServerAuthCode());
-            // Signed in successfully, show authenticated UI.
-            // updateUI(account);
+            getAccessToken(account.getServerAuthCode(), this);
         } catch (ApiException e) {
-            // The ApiException status code indicates the detailed failure reason.
-            // Please refer to the GoogleSignInStatusCodes class reference for more information.
             Toast.makeText(this, "Error "+e, Toast.LENGTH_LONG).show();
-//            updateUI(null);
         }
     }
 
-    public void getAccessToken(String authCode) {
+    public void getAccessToken(String authCode, Context context) {
         OkHttpClient client = new OkHttpClient();
         RequestBody requestBody = new FormBody.Builder()
                 .add("code", authCode)
@@ -186,13 +178,23 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(accessTokenResponse.getToken_type());
 
                 SharedPreferences.Editor edit = mSettings.edit();
-                if (accessTokenResponse.getAccess_token()!=null)
-                    edit.putString(APP_PREFERENCES_ACCESS_TOKEN, Base64.encodeToString(rsaEncrypt(accessTokenResponse.getAccess_token().getBytes("UTF-8")), Base64.NO_WRAP));
-                if (accessTokenResponse.getRefresh_token()!=null)
-                    edit.putString(APP_PREFERENCES_REFRESH_TOKEN, Base64.encodeToString(rsaEncrypt(accessTokenResponse.getRefresh_token().getBytes("UTF-8")), Base64.NO_WRAP));
-                else
-                    edit.putString(APP_PREFERENCES_REFRESH_TOKEN, Base64.encodeToString(rsaEncrypt("1//0cYyWCJMLVpSMCgYIARAAGAwSNwF-L9IrQnhWrKh2EFvaDF7ssNpFSRJqKfWiU-SGNjXjvJII-Q1PZADCKSeedscY42gdsiCEEoo".getBytes("UTF-8")), Base64.DEFAULT));
+                if (accessTokenResponse.getAccess_token()!=null) {
+                    accessToken = Base64.encodeToString(rsaEncrypt(accessTokenResponse.getAccess_token().getBytes("UTF-8")), Base64.NO_WRAP);
+                    edit.putString(APP_PREFERENCES_ACCESS_TOKEN, accessToken);
+                }
+                if (accessTokenResponse.getRefresh_token()!=null) {
+                    refreshToken = Base64.encodeToString(rsaEncrypt(accessTokenResponse.getRefresh_token().getBytes("UTF-8")), Base64.NO_WRAP);
+                    edit.putString(APP_PREFERENCES_REFRESH_TOKEN, refreshToken);
+                }
                 edit.apply();
+
+                if (refreshToken!=null) {
+                    Intent intent = new Intent(context, BookSearchActivity.class);
+                    startActivity(intent);
+                }
+                else
+                    Toast.makeText(context, "Refresh token is empty", Toast.LENGTH_LONG).show();
+
 
 //                System.out.println("ACCESS: "+ mSettings.getString(APP_PREFERENCES_ACCESS_TOKEN, "нихуа"));
 //                System.out.println("REFRESH: "+ mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, "нихуа"));
