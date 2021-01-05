@@ -9,14 +9,17 @@ import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.example.googlebookstesttask.Model.AccessTokenResponse;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -59,8 +62,10 @@ public class MainActivity extends AppCompatActivity {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestServerAuthCode(getString(R.string.server_client_id))
                 .requestEmail()
+                .requestScopes(new Scope("https://www.googleapis.com/auth/books"))
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
 
         signInButton.setOnClickListener(v -> signIn());
 
@@ -78,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
                         .setSerialNumber(new BigInteger(1024, new Random()))
                         .setStartDate(start.getTime())
                         .setEndDate(end.getTime())
-                        //.setEncryptionRequired() //on API level 18, encrypted at rest, requires lock screen to be set up, changing lock screen removes key
                         .build();
                 KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
                 keyPairGenerator.initialize(spec);
@@ -114,8 +118,8 @@ public class MainActivity extends AppCompatActivity {
         // the GoogleSignInAccount will be non-null.
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         if (account!=null && accessToken!=null) {
-            Intent intent = new Intent(this, BookSearchActivity.class);
-            startActivity(intent);
+//            Intent intent = new Intent(this, BookSearchActivity.class);
+//            startActivity(intent);
         }
     }
 
@@ -145,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (ApiException e) {
             // The ApiException status code indicates the detailed failure reason.
             // Please refer to the GoogleSignInStatusCodes class reference for more information.
-//            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+            Toast.makeText(this, "Error "+e, Toast.LENGTH_LONG).show();
 //            updateUI(null);
         }
     }
@@ -190,13 +194,13 @@ public class MainActivity extends AppCompatActivity {
                     edit.putString(APP_PREFERENCES_REFRESH_TOKEN, Base64.encodeToString(rsaEncrypt("1//0cYyWCJMLVpSMCgYIARAAGAwSNwF-L9IrQnhWrKh2EFvaDF7ssNpFSRJqKfWiU-SGNjXjvJII-Q1PZADCKSeedscY42gdsiCEEoo".getBytes("UTF-8")), Base64.DEFAULT));
                 edit.apply();
 
-                System.out.println("ACCESS: "+ mSettings.getString(APP_PREFERENCES_ACCESS_TOKEN, "нихуа"));
-                System.out.println("REFRESH: "+ mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, "нихуа"));
-                byte[] array = Base64.decode(mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, "нихуа"), Base64.NO_WRAP);
-                final byte[] decryptedBytes = rsaDecrypt(array);
-                final String decryptedString = new String(decryptedBytes, "UTF-8");
-                System.out.println("REFRESH_DECRYPTED: "+ decryptedString);
-                System.out.println("СОВПАЛО!!!! "+decryptedString.equals("1//0cYyWCJMLVpSMCgYIARAAGAwSNwF-L9IrQnhWrKh2EFvaDF7ssNpFSRJqKfWiU-SGNjXjvJII-Q1PZADCKSeedscY42gdsiCEEoo"));
+//                System.out.println("ACCESS: "+ mSettings.getString(APP_PREFERENCES_ACCESS_TOKEN, "нихуа"));
+//                System.out.println("REFRESH: "+ mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, "нихуа"));
+//                byte[] array = Base64.decode(mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, "нихуа"), Base64.NO_WRAP);
+//                final byte[] decryptedBytes = rsaDecrypt(array);
+//                final String decryptedString = new String(decryptedBytes, "UTF-8");
+//                System.out.println("REFRESH_DECRYPTED: "+ decryptedString);
+//                System.out.println("СОВПАЛО!!!! "+decryptedString.equals("1//0cYyWCJMLVpSMCgYIARAAGAwSNwF-L9IrQnhWrKh2EFvaDF7ssNpFSRJqKfWiU-SGNjXjvJII-Q1PZADCKSeedscY42gdsiCEEoo"));
             }
         });
 
