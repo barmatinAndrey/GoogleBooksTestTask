@@ -2,13 +2,16 @@ package com.example.googlebookstesttask;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.SearchView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -32,7 +35,6 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     private Integer counter;
     private CompositeDisposable mCompositeDisposable;
     private RecyclerView recyclerView;
-    private SearchView searchView;
     private BookListAdapter adapter;
 
     public BookListFragment() {
@@ -52,6 +54,7 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
         if (getArguments() != null)
             counter = getArguments().getInt("counter");
         mCompositeDisposable = new CompositeDisposable();
+        setHasOptionsMenu(true);
     }
 
 
@@ -65,13 +68,20 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         recyclerView = view.findViewById(R.id.recycler);
-        searchView = view.findViewById(R.id.searchView);
+    }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_search, menu);
+        MenuItem itemSearch = menu.findItem(R.id.item_search);
+        SearchView searchView = (SearchView) itemSearch.getActionView();
+        searchView.setQueryHint(getString(R.string.enter_text_to_search));
+        searchView.setIconifiedByDefault(false);
+        searchView.setIconified(false);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 search(query);
-                System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                 return false;
             }
 

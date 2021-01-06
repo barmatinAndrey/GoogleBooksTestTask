@@ -13,8 +13,6 @@ public class BookSearchActivity extends AppCompatActivity {
     private TabLayout tabs;
     private ViewPager2 pager;
 
-    private CompositeDisposable mCompositeDisposable;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
