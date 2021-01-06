@@ -25,6 +25,10 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         bookItemList = booksApiResponse.getItems();
     }
 
+    public void setItems(BooksApiResponse booksApiResponse) {
+        bookItemList = booksApiResponse.getItems();
+    }
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_book, parent, false);
@@ -33,9 +37,11 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Picasso.with(context)
-                .load(bookItemList.get(position).getVolumeInfo().getImageLinks().getThumbnail())
-                .into(holder.thumbnail);
+        if (bookItemList.get(position).getVolumeInfo().getImageLinks()!=null) {
+            Picasso.with(context)
+                    .load(bookItemList.get(position).getVolumeInfo().getImageLinks().getThumbnail())
+                    .into(holder.thumbnail);
+        }
         holder.title.setText(bookItemList.get(position).getVolumeInfo().getTitle());
         String authors = "";
         if (bookItemList.get(position).getVolumeInfo().getAuthors()!=null) {

@@ -1,9 +1,20 @@
 package com.example.googlebookstesttask.Utils;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Base64;
+import android.widget.Toast;
+
+import com.example.googlebookstesttask.BookSearchActivity;
+import com.example.googlebookstesttask.Model.AccessTokenResponse;
+import com.example.googlebookstesttask.R;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
 import java.security.interfaces.RSAPublicKey;
@@ -11,6 +22,19 @@ import java.util.ArrayList;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+import static com.example.googlebookstesttask.MainActivity.APP_PREFERENCES_ACCESS_TOKEN;
+import static com.example.googlebookstesttask.MainActivity.accessToken;
+import static com.example.googlebookstesttask.MainActivity.mSettings;
+import static com.example.googlebookstesttask.MainActivity.refreshToken;
 
 
 public class AnyUtils {
@@ -73,6 +97,44 @@ public class AnyUtils {
         byte[] encryptedBytes = Base64.decode(encryptedString, Base64.NO_WRAP);
         final byte[] decryptedBytes = rsaDecrypt(encryptedBytes);
         return new String(decryptedBytes, "UTF-8");
+    }
+
+    public static void getNewAccessToken(Context context, IRefreshAccessToken iRefreshAccessToken) {
+        OkHttpClient client = new OkHttpClient();
+        RequestBody requestBody = new FormBody.Builder()
+                .add("client_id", context.getString(R.string.server_client_id))
+                .add("client_secret", context.getString(R.string.client_secret))
+                .add("grant_type", "refresh_token")
+                .add("refresh_token", refreshToken)
+                .build();
+        Request request = new Request.Builder()
+                .url("https://oauth2.googleapis.com/token")
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .post(requestBody)
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                Gson gson = new GsonBuilder()
+                        .setPrettyPrinting()
+                        .create();
+                AccessTokenResponse accessTokenResponse = gson.fromJson(response.body().string(), AccessTokenResponse.class);
+                SharedPreferences.Editor edit = mSettings.edit();
+                if (accessTokenResponse.getAccess_token()!=null) {
+                    accessToken = Base64.encodeToString(rsaEncrypt(accessTokenResponse.getAccess_token().getBytes("UTF-8")), Base64.NO_WRAP);
+                    edit.putString(APP_PREFERENCES_ACCESS_TOKEN, accessToken);
+                }
+                edit.apply();
+                iRefreshAccessToken.tokenRefreshed();
+            }
+        });
+
+
     }
 
 }
