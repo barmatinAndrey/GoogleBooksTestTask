@@ -126,8 +126,9 @@ public class AnyUtils {
                 AccessTokenResponse accessTokenResponse = gson.fromJson(response.body().string(), AccessTokenResponse.class);
                 SharedPreferences.Editor edit = mSettings.edit();
                 if (accessTokenResponse.getAccess_token()!=null) {
-                    accessToken = Base64.encodeToString(rsaEncrypt(accessTokenResponse.getAccess_token().getBytes("UTF-8")), Base64.NO_WRAP);
-                    edit.putString(APP_PREFERENCES_ACCESS_TOKEN, accessToken);
+                    accessToken = accessTokenResponse.getAccess_token();
+                    String accessTokenEncrypted = Base64.encodeToString(rsaEncrypt(accessToken.getBytes("UTF-8")), Base64.NO_WRAP);
+                    edit.putString(APP_PREFERENCES_ACCESS_TOKEN, accessTokenEncrypted);
                 }
                 edit.apply();
                 iRefreshAccessToken.tokenRefreshed();

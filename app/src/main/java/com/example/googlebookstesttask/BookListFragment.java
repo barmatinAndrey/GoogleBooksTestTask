@@ -36,6 +36,7 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     private CompositeDisposable mCompositeDisposable;
     private RecyclerView recyclerView;
     private BookListAdapter adapter;
+    private SearchView searchView;
 
     public BookListFragment() {
     }
@@ -55,6 +56,7 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
             counter = getArguments().getInt("counter");
         mCompositeDisposable = new CompositeDisposable();
         setHasOptionsMenu(true);
+        accessToken = "aaa";
     }
 
 
@@ -74,7 +76,7 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_search, menu);
         MenuItem itemSearch = menu.findItem(R.id.item_search);
-        SearchView searchView = (SearchView) itemSearch.getActionView();
+        searchView = (SearchView) itemSearch.getActionView();
         searchView.setQueryHint(getString(R.string.enter_text_to_search));
         searchView.setIconifiedByDefault(false);
         searchView.setIconified(false);
@@ -100,7 +102,7 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
                 .build()
                 .create(RetrofitService.class);
 
-        mCompositeDisposable.add(retrofitService.getBooks(accessToken, textToSearch)
+        mCompositeDisposable.add(retrofitService.getBooks("Bearer "+accessToken, textToSearch)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
                 .subscribe(this::handleResponse, this::handleError));
@@ -135,7 +137,7 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
 
     @Override
     public void tokenRefreshed() {
-
+        search(searchView.getQuery().toString());
     }
 }
 

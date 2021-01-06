@@ -179,12 +179,14 @@ public class MainActivity extends AppCompatActivity {
 
                 SharedPreferences.Editor edit = mSettings.edit();
                 if (accessTokenResponse.getAccess_token()!=null) {
-                    accessToken = Base64.encodeToString(rsaEncrypt(accessTokenResponse.getAccess_token().getBytes("UTF-8")), Base64.NO_WRAP);
-                    edit.putString(APP_PREFERENCES_ACCESS_TOKEN, accessToken);
+                    accessToken = accessTokenResponse.getAccess_token();
+                    String accessTokenEncrypted = Base64.encodeToString(rsaEncrypt(accessToken.getBytes("UTF-8")), Base64.NO_WRAP);
+                    edit.putString(APP_PREFERENCES_ACCESS_TOKEN, accessTokenEncrypted);
                 }
                 if (accessTokenResponse.getRefresh_token()!=null) {
-                    refreshToken = Base64.encodeToString(rsaEncrypt(accessTokenResponse.getRefresh_token().getBytes("UTF-8")), Base64.NO_WRAP);
-                    edit.putString(APP_PREFERENCES_REFRESH_TOKEN, refreshToken);
+                    refreshToken = accessTokenResponse.getRefresh_token();
+                    String refreshTokenEncrypted = Base64.encodeToString(rsaEncrypt(refreshToken.getBytes("UTF-8")), Base64.NO_WRAP);
+                    edit.putString(APP_PREFERENCES_REFRESH_TOKEN, refreshTokenEncrypted);
                 }
                 edit.apply();
 
