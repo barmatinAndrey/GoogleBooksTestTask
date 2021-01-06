@@ -12,5 +12,6 @@
     <string name="search">Поиск</string>
     <string name="favorites">Избранное</string>
     <string name="enter_text_to_search">Введите текст для поиска</string>
+    <string name="сlick_to_view">Нажмите для просмотра</string>
 
 </resources>

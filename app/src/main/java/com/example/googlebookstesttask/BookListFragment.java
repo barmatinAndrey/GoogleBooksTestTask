@@ -16,7 +16,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.googlebookstesttask.Model.BooksApiResponse;
-import com.example.googlebookstesttask.Utils.BookListAdapter;
 import com.example.googlebookstesttask.Utils.IRefreshAccessToken;
 import com.example.googlebookstesttask.Utils.RetrofitService;
 import com.jakewharton.retrofit2.adapter.rxjava2.HttpException;
@@ -33,10 +32,11 @@ import static com.example.googlebookstesttask.Utils.AnyUtils.getNewAccessToken;
 
 public class BookListFragment extends Fragment implements IRefreshAccessToken {
     private Integer counter;
-    private CompositeDisposable mCompositeDisposable;
+    public static CompositeDisposable mCompositeDisposable;
     private RecyclerView recyclerView;
     private BookListAdapter adapter;
     private SearchView searchView;
+    private RetrofitService retrofitService;
 
     public BookListFragment() {
     }
@@ -55,8 +55,14 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
         if (getArguments() != null)
             counter = getArguments().getInt("counter");
         mCompositeDisposable = new CompositeDisposable();
-        setHasOptionsMenu(true);
-        accessToken = "aaa";
+        if (counter==0)
+            setHasOptionsMenu(true);
+        retrofitService = new Retrofit.Builder()
+                .baseUrl("https://www.googleapis.com/")
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+                .create(RetrofitService.class);
     }
 
 
@@ -70,6 +76,9 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         recyclerView = view.findViewById(R.id.recycler);
+        if (counter==1) {
+            loadFavourites();
+        }
     }
 
     @Override
@@ -95,14 +104,14 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     }
 
     private void search(String textToSearch) {
-        RetrofitService retrofitService = new Retrofit.Builder()
-                .baseUrl("https://www.googleapis.com/")
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-                .create(RetrofitService.class);
-
         mCompositeDisposable.add(retrofitService.getBooks("Bearer "+accessToken, textToSearch)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(this::handleResponse, this::handleError));
+    }
+
+    private void loadFavourites() {
+        mCompositeDisposable.add(retrofitService.getFavouriteBooks("Bearer " + accessToken)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
                 .subscribe(this::handleResponse, this::handleError));
@@ -137,7 +146,10 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
 
     @Override
     public void tokenRefreshed() {
-        search(searchView.getQuery().toString());
+        if (counter==0)
+            search(searchView.getQuery().toString());
+        else if (counter==1)
+            loadFavourites();
     }
 }
 

@@ -24,6 +24,7 @@ public class BooksApiResponse {
 
 
     public class BookItem {
+        private String id;
         private volumeInfo volumeInfo;
 
         public BookItem.volumeInfo getVolumeInfo() {
@@ -32,6 +33,14 @@ public class BooksApiResponse {
 
         public void setVolumeInfo(BookItem.volumeInfo volumeInfo) {
             this.volumeInfo = volumeInfo;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
         }
 
 
