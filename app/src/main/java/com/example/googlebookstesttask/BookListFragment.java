@@ -32,11 +32,11 @@ import static com.example.googlebookstesttask.Utils.AnyUtils.getNewAccessToken;
 
 public class BookListFragment extends Fragment implements IRefreshAccessToken {
     private Integer counter;
-    public static CompositeDisposable mCompositeDisposable;
     private RecyclerView recyclerView;
     private BookListAdapter adapter;
     private SearchView searchView;
-    private RetrofitService retrofitService;
+    public static CompositeDisposable mCompositeDisposable;
+    public static RetrofitService retrofitService;
 
     public BookListFragment() {
     }

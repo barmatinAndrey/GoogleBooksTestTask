@@ -12,23 +12,21 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.googlebookstesttask.Model.BooksApiResponse;
 import com.squareup.picasso.Picasso;
-
 import java.util.List;
-
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
-
+import static com.example.googlebookstesttask.BookListFragment.mCompositeDisposable;
+import static com.example.googlebookstesttask.BookListFragment.retrofitService;
 import static com.example.googlebookstesttask.MainActivity.accessToken;
 
 public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHolder> {
     private Context context;
     private List<BooksApiResponse.BookItem> bookItemList;
+    private ImageButton image_button;
 
     public BookListAdapter(Context context, BooksApiResponse booksApiResponse) {
         this.context = context;
@@ -69,12 +67,17 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         });
 
         holder.favorites_button.setOnClickListener(v -> {
-            BookListFragment.mCompositeDisposable.add(retrofitService.getFavouriteBooks("Bearer " + accessToken)
-                    .observeOn(AndroidSchedulers.mainThread())
+            image_button = holder.favorites_button;
+            mCompositeDisposable.add(retrofitService.addToFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
                     .subscribeOn(Schedulers.io())
-                    .subscribe(this::handleResponse, this::handleError));
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(this::handleComplete));
         });
 
+    }
+
+    private void handleComplete() {
+        image_button.setImageDrawable(context.getResources().getDrawable(R.drawable.common_google_signin_btn_text_light));
     }
 
     @Override

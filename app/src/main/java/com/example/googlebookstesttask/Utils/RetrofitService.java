@@ -2,11 +2,10 @@ package com.example.googlebookstesttask.Utils;
 
 import com.example.googlebookstesttask.Model.BooksApiResponse;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
-import retrofit2.Response;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
-import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
 
@@ -21,6 +20,6 @@ public interface RetrofitService {
 
 //    @Headers({"Content-Type: application/json", "Content-Length: CONTENT_LENGTH"})
     @POST("/books/v1/mylibrary/bookshelves/0/addVolume")
-    Observable<Response<Void>> addToFavorites(@Header("Authorization") String token, @Query("volumeId") String volumeId);
+    Completable addToFavorites(@Header("Authorization") String token, @Query("volumeId") String volumeId);
 
 }
