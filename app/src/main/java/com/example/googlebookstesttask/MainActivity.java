@@ -190,12 +190,12 @@ public class MainActivity extends AppCompatActivity {
                 }
                 edit.apply();
 
-                if (refreshToken!=null) {
-                    Intent intent = new Intent(context, BookSearchActivity.class);
-                    startActivity(intent);
-                }
-                else
-                    Toast.makeText(context, "Refresh token is empty", Toast.LENGTH_LONG).show();
+//                if (refreshToken!=null) {
+                Intent intent = new Intent(context, BookSearchActivity.class);
+                startActivity(intent);
+//                }
+//                else
+//                    Toast.makeText(context, "Refresh token is empty", Toast.LENGTH_LONG).show();
 
 
 //                System.out.println("ACCESS: "+ mSettings.getString(APP_PREFERENCES_ACCESS_TOKEN, "нихуа"));

@@ -1,10 +1,16 @@
 package com.example.googlebookstesttask.Model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BooksApiResponse {
     private String totalItems;
     private List<BookItem> items;
+
+    public BooksApiResponse() {
+        items = new ArrayList<>();
+    }
+
 
     public String getTotalItems() {
         return totalItems;
@@ -25,6 +31,7 @@ public class BooksApiResponse {
 
     public class BookItem {
         private String id;
+        private boolean ifInFavourites;
         private volumeInfo volumeInfo;
 
         public BookItem.volumeInfo getVolumeInfo() {
@@ -41,6 +48,14 @@ public class BooksApiResponse {
 
         public void setId(String id) {
             this.id = id;
+        }
+
+        public boolean isIfInFavourites() {
+            return ifInFavourites;
+        }
+
+        public void setIfInFavourites(boolean ifInFavourites) {
+            this.ifInFavourites = ifInFavourites;
         }
 
 

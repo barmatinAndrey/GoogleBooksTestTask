@@ -9,6 +9,7 @@ import android.text.style.URLSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
@@ -16,7 +17,6 @@ import android.widget.ToggleButton;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.googlebookstesttask.Model.BooksApiResponse;
-import com.example.googlebookstesttask.Model.BooksApiResponseFavourites;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -29,17 +29,14 @@ import static com.example.googlebookstesttask.MainActivity.accessToken;
 public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHolder> {
     private Context context;
     private List<BooksApiResponse.BookItem> bookItemList;
-    private List<String> favouritesIds;
 
-    public BookListAdapter(Context context, BooksApiResponseFavourites booksApiResponseFavourites) {
+    public BookListAdapter(Context context, BooksApiResponse booksApiResponse) {
         this.context = context;
-        bookItemList = booksApiResponseFavourites.getSearchResponse().getItems();
-        favouritesIds = booksApiResponseFavourites.getFavouritesIds();
+        bookItemList = booksApiResponse.getItems();
     }
 
-    public void setItems(BooksApiResponseFavourites booksApiResponseFavourites) {
-        bookItemList = booksApiResponseFavourites.getSearchResponse().getItems();
-        favouritesIds = booksApiResponseFavourites.getFavouritesIds();
+    public void setItems(BooksApiResponse booksApiResponse) {
+        bookItemList = booksApiResponse.getItems();
     }
 
     @Override
@@ -71,14 +68,21 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
             context.startActivity(browserIntent);
         });
 
-        if (favouritesIds.contains(bookItemList.get(position).getId()))
-            holder.favorites_button.setChecked(true);
+        holder.favorites_button.setChecked(bookItemList.get(position).isIfInFavourites());
 
-        holder.favorites_button.setOnClickListener(v -> {
-            mCompositeDisposable.add(retrofitService.addToFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(this::handleComplete));
+        holder.favorites_button.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                mCompositeDisposable.add(retrofitService.addToFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(this::handleComplete));
+            }
+            else {
+                mCompositeDisposable.add(retrofitService.removeFromFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(this::handleComplete));
+            }
         });
 
     }

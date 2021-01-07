@@ -18,8 +18,10 @@ public interface RetrofitService {
     @GET("/books/v1/mylibrary/bookshelves/0/volumes?projection=lite")
     Observable<BooksApiResponse> getFavouriteBooks(@Header("Authorization") String token);
 
-//    @Headers({"Content-Type: application/json", "Content-Length: CONTENT_LENGTH"})
     @POST("/books/v1/mylibrary/bookshelves/0/addVolume")
     Completable addToFavorites(@Header("Authorization") String token, @Query("volumeId") String volumeId);
+
+    @POST("/books/v1/mylibrary/bookshelves/0/removeVolume")
+    Completable removeFromFavorites(@Header("Authorization") String token, @Query("volumeId") String volumeId);
 
 }

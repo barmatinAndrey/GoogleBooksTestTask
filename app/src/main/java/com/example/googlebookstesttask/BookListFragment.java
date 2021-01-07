@@ -16,7 +16,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.googlebookstesttask.Model.BooksApiResponse;
-import com.example.googlebookstesttask.Model.BooksApiResponseFavourites;
 import com.example.googlebookstesttask.Utils.IRefreshAccessToken;
 import com.example.googlebookstesttask.Utils.RetrofitService;
 import com.jakewharton.retrofit2.adapter.rxjava2.HttpException;
@@ -30,9 +29,7 @@ import java.util.List;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.BiFunction;
-import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -78,9 +75,10 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     @Override
     public void onResume() {
         super.onResume();
-        if (counter==1) {
+        if (counter==0 && searchView!=null && !searchView.getQuery().toString().isEmpty())
+            search(searchView.getQuery().toString());
+        else if (counter==1)
             loadFavourites();
-        }
     }
 
     @Override
@@ -93,9 +91,6 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         recyclerView = view.findViewById(R.id.recycler);
-        if (counter==1) {
-            loadFavourites();
-        }
     }
 
     @Override
@@ -128,18 +123,25 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io());
 
-        mCompositeDisposable.add(Observable.zip(search, favourites, new BiFunction<BooksApiResponse, BooksApiResponse, BooksApiResponseFavourites>() {
+        mCompositeDisposable.add(Observable.zip(search, favourites, new BiFunction<BooksApiResponse, BooksApiResponse, BooksApiResponse>() {
             @io.reactivex.annotations.NonNull
             @Override
-            public BooksApiResponseFavourites apply(@NotNull BooksApiResponse searchResponse, @NotNull BooksApiResponse favouritesResponse) throws Exception {
-                return new BooksApiResponseFavourites(searchResponse, favouritesResponse);
+            public BooksApiResponse apply(@NotNull BooksApiResponse searchResponse, @NotNull BooksApiResponse favouritesResponse) throws Exception {
+                List<String> favouritesIds = new ArrayList();
+                if (favouritesResponse.getItems()!=null && !favouritesResponse.getItems().isEmpty()) {
+                    for (BooksApiResponse.BookItem item : favouritesResponse.getItems())
+                        favouritesIds.add(item.getId());
+                }
+                for (BooksApiResponse.BookItem item1: searchResponse.getItems()) {
+                    if (favouritesIds.contains(item1.getId()))
+                        item1.setIfInFavourites(true);
+                }
+                return searchResponse;
             }
         })
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
                 .subscribe(this::handleResponse, this::handleError));
-
-
 
 //        mCompositeDisposable.add(retrofitService.getBooks("Bearer "+accessToken, textToSearch)
 //                .observeOn(AndroidSchedulers.mainThread())
@@ -148,21 +150,32 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     }
 
     private void loadFavourites() {
-//        mCompositeDisposable.add(retrofitService.getFavouriteBooks("Bearer " + accessToken)
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribeOn(Schedulers.io())
-//                .subscribe(this::handleResponse, this::handleError));
+        mCompositeDisposable.add(retrofitService.getFavouriteBooks("Bearer " + accessToken)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(this::handleResponseFavourites, this::handleError));
     }
 
-    private void handleResponse(BooksApiResponseFavourites booksApiResponseFavourites) {
-        if (adapter==null) {
-            adapter = new BookListAdapter(getContext(), booksApiResponseFavourites);
+    private void handleResponse(BooksApiResponse booksApiResponse) {
+        if (booksApiResponse.getItems()==null)
+            booksApiResponse = new BooksApiResponse();
+
+        if (adapter == null) {
+            adapter = new BookListAdapter(getContext(), booksApiResponse);
             recyclerView.setAdapter(adapter);
-        }
-        else {
-            adapter.setItems(booksApiResponseFavourites);
+        } else {
+            adapter.setItems(booksApiResponse);
             adapter.notifyDataSetChanged();
         }
+    }
+
+    private void handleResponseFavourites(BooksApiResponse booksApiResponse) {
+        if (booksApiResponse.getItems()!=null && !booksApiResponse.getItems().isEmpty()) {
+            for (BooksApiResponse.BookItem item : booksApiResponse.getItems()) {
+                item.setIfInFavourites(true);
+            }
+        }
+        handleResponse(booksApiResponse);
     }
 
     private void handleError(Throwable error) {
