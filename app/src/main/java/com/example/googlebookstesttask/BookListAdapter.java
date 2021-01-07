@@ -16,7 +16,9 @@ import android.widget.ToggleButton;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.googlebookstesttask.Model.BooksApiResponse;
+import com.example.googlebookstesttask.Model.BooksApiResponseFavourites;
 import com.squareup.picasso.Picasso;
+
 import java.util.List;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
@@ -27,15 +29,17 @@ import static com.example.googlebookstesttask.MainActivity.accessToken;
 public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHolder> {
     private Context context;
     private List<BooksApiResponse.BookItem> bookItemList;
-    private ToggleButton image_button;
+    private List<String> favouritesIds;
 
-    public BookListAdapter(Context context, BooksApiResponse booksApiResponse) {
+    public BookListAdapter(Context context, BooksApiResponseFavourites booksApiResponseFavourites) {
         this.context = context;
-        bookItemList = booksApiResponse.getItems();
+        bookItemList = booksApiResponseFavourites.getSearchResponse().getItems();
+        favouritesIds = booksApiResponseFavourites.getFavouritesIds();
     }
 
-    public void setItems(BooksApiResponse booksApiResponse) {
-        bookItemList = booksApiResponse.getItems();
+    public void setItems(BooksApiResponseFavourites booksApiResponseFavourites) {
+        bookItemList = booksApiResponseFavourites.getSearchResponse().getItems();
+        favouritesIds = booksApiResponseFavourites.getFavouritesIds();
     }
 
     @Override
@@ -67,8 +71,10 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
             context.startActivity(browserIntent);
         });
 
+        if (favouritesIds.contains(bookItemList.get(position).getId()))
+            holder.favorites_button.setChecked(true);
+
         holder.favorites_button.setOnClickListener(v -> {
-            image_button = holder.favorites_button;
             mCompositeDisposable.add(retrofitService.addToFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
