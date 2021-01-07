@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.ToggleButton;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.googlebookstesttask.Model.BooksApiResponse;
@@ -26,7 +28,7 @@ import static com.example.googlebookstesttask.MainActivity.accessToken;
 public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHolder> {
     private Context context;
     private List<BooksApiResponse.BookItem> bookItemList;
-    private ImageButton image_button;
+    private ToggleButton image_button;
 
     public BookListAdapter(Context context, BooksApiResponse booksApiResponse) {
         this.context = context;
@@ -77,7 +79,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
     }
 
     private void handleComplete() {
-        image_button.setImageDrawable(context.getResources().getDrawable(R.drawable.common_google_signin_btn_text_light));
+
     }
 
     @Override
@@ -90,7 +92,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         private TextView title;
         private TextView author;
         private TextView preview;
-        private ImageButton favorites_button;
+        private ToggleButton favorites_button;
 
         public ViewHolder(View view) {
             super(view);

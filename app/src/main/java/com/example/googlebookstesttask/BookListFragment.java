@@ -65,6 +65,13 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
                 .create(RetrofitService.class);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (counter==1) {
+            loadFavourites();
+        }
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
