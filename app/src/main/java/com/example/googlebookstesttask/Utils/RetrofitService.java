@@ -12,10 +12,10 @@ import retrofit2.http.Query;
 
 public interface RetrofitService {
 
-    @GET("/books/v1/volumes")
+    @GET("/books/v1/volumes?projection=lite")
     Observable<BooksApiResponse> getBooks(@Header("Authorization") String token, @Query("q") String q);
 
-    @GET("/books/v1/mylibrary/bookshelves/0/volumes")
+    @GET("/books/v1/mylibrary/bookshelves/0/volumes?projection=lite")
     Observable<BooksApiResponse> getFavouriteBooks(@Header("Authorization") String token);
 
 //    @Headers({"Content-Type: application/json", "Content-Length: CONTENT_LENGTH"})
