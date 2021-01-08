@@ -44,6 +44,7 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     private SearchView searchView;
     public static CompositeDisposable mCompositeDisposable;
     public static RetrofitService retrofitService;
+    private String textToSearch;
 
     public BookListFragment() {
     }
@@ -75,8 +76,8 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     @Override
     public void onResume() {
         super.onResume();
-        if (counter==0 && searchView!=null && !searchView.getQuery().toString().isEmpty())
-            search(searchView.getQuery().toString());
+        if (counter==0 && textToSearch!=null && !textToSearch.isEmpty())
+            search(textToSearch);
         else if (counter==1)
             loadFavourites();
     }
@@ -104,6 +105,7 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
+                textToSearch = query;
                 search(query);
                 return false;
             }

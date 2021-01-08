@@ -70,8 +70,8 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
         holder.favorites_button.setChecked(bookItemList.get(position).isIfInFavourites());
 
-        holder.favorites_button.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
+        holder.favorites_button.setOnClickListener(v -> {
+            if (holder.favorites_button.isChecked()) {
                 mCompositeDisposable.add(retrofitService.addToFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
@@ -84,6 +84,23 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
                         .subscribe(this::handleComplete));
             }
         });
+
+
+
+//        holder.favorites_button.setOnCheckedChangeListener((buttonView, isChecked) -> {
+//            if (isChecked) {
+//                mCompositeDisposable.add(retrofitService.addToFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
+//                        .subscribeOn(Schedulers.io())
+//                        .observeOn(AndroidSchedulers.mainThread())
+//                        .subscribe(this::handleComplete));
+//            }
+//            else {
+//                mCompositeDisposable.add(retrofitService.removeFromFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
+//                        .subscribeOn(Schedulers.io())
+//                        .observeOn(AndroidSchedulers.mainThread())
+//                        .subscribe(this::handleComplete));
+//            }
+//        });
 
     }
 
