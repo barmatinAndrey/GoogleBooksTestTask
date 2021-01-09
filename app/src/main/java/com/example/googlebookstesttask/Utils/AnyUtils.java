@@ -1,12 +1,8 @@
 package com.example.googlebookstesttask.Utils;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Base64;
-import android.widget.Toast;
-
-import com.example.googlebookstesttask.BookSearchActivity;
 import com.example.googlebookstesttask.Model.AccessTokenResponse;
 import com.example.googlebookstesttask.R;
 import com.google.gson.Gson;

@@ -9,24 +9,27 @@ import android.text.style.URLSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.googlebookstesttask.Model.BooksApiResponse;
+import com.example.googlebookstesttask.Utils.IRefreshAccessToken;
+import com.jakewharton.retrofit2.adapter.rxjava2.HttpException;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
-import static com.example.googlebookstesttask.BookListFragment.mCompositeDisposable;
-import static com.example.googlebookstesttask.BookListFragment.retrofitService;
+import static com.example.googlebookstesttask.BookSearchActivity.mCompositeDisposable;
+import static com.example.googlebookstesttask.BookSearchActivity.retrofitService;
 import static com.example.googlebookstesttask.MainActivity.accessToken;
+import static com.example.googlebookstesttask.Utils.AnyUtils.getNewAccessToken;
 
-public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHolder> {
+public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHolder> implements IRefreshAccessToken {
     private Context context;
     private List<BooksApiResponse.BookItem> bookItemList;
 
@@ -69,7 +72,6 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         });
 
         holder.favorites_button.setChecked(bookItemList.get(position).isIfInFavourites());
-
         holder.favorites_button.setOnClickListener(v -> {
             if (holder.favorites_button.isChecked()) {
                 mCompositeDisposable.add(retrofitService.addToFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
@@ -84,28 +86,35 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
                         .subscribe(this::handleComplete));
             }
         });
-
-
-
-//        holder.favorites_button.setOnCheckedChangeListener((buttonView, isChecked) -> {
-//            if (isChecked) {
-//                mCompositeDisposable.add(retrofitService.addToFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
-//                        .subscribeOn(Schedulers.io())
-//                        .observeOn(AndroidSchedulers.mainThread())
-//                        .subscribe(this::handleComplete));
-//            }
-//            else {
-//                mCompositeDisposable.add(retrofitService.removeFromFavorites("Bearer " + accessToken, bookItemList.get(position).getId())
-//                        .subscribeOn(Schedulers.io())
-//                        .observeOn(AndroidSchedulers.mainThread())
-//                        .subscribe(this::handleComplete));
-//            }
-//        });
-
     }
 
     private void handleComplete() {
+        mCompositeDisposable.add(retrofitService.getFavouriteBooks("Bearer " + accessToken)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(this::handleResponse, this::handleError));
+    }
 
+    private void handleResponse(BooksApiResponse booksApiResponse) {
+        if (booksApiResponse.getItems()!=null)
+            BookSearchActivity.tabs.getTabAt(1).setText(context.getResources().getStringArray(R.array.tabs)[1]+" ("+booksApiResponse.getItems().size()+")");
+        else
+            BookSearchActivity.tabs.getTabAt(1).setText(context.getResources().getStringArray(R.array.tabs)[1]+" (0)");
+    }
+
+    private void handleError(Throwable error) {
+        if (error instanceof HttpException) {
+            HttpException exception = (HttpException) error;
+            if (exception.code() == 401)
+                getNewAccessToken(context, this);
+            else
+                Toast.makeText(context, "Error "+error.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void tokenRefreshed() {
+        handleComplete();
     }
 
     @Override

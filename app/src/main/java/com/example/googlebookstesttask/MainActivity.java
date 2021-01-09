@@ -8,9 +8,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.security.KeyPairGeneratorSpec;
-import android.security.keystore.KeyProperties;
 import android.util.Base64;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.example.googlebookstesttask.Model.AccessTokenResponse;
@@ -18,7 +16,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
@@ -42,7 +39,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static com.example.googlebookstesttask.Utils.AnyUtils.getDecryptedString;
-import static com.example.googlebookstesttask.Utils.AnyUtils.rsaDecrypt;
 import static com.example.googlebookstesttask.Utils.AnyUtils.rsaEncrypt;
 
 public class MainActivity extends AppCompatActivity {
@@ -90,20 +86,12 @@ public class MainActivity extends AppCompatActivity {
                 KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
                 keyPairGenerator.initialize(spec);
                 keyPairGenerator.generateKeyPair();
-
-                //Encryption test
-                final byte[] encryptedBytes = rsaEncrypt("666666666666666666666666666666666666666666666".getBytes("UTF-8"));
-                final byte[] decryptedBytes = rsaDecrypt(encryptedBytes);
-                final String decryptedString = new String(decryptedBytes, "UTF-8");
-                Log.e("MyApp", "Decrypted string is " + decryptedString);
             }
             else {
                 if (mSettings.contains(APP_PREFERENCES_ACCESS_TOKEN))
                     accessToken = getDecryptedString(mSettings.getString(APP_PREFERENCES_ACCESS_TOKEN, ""));
                 if (mSettings.contains(APP_PREFERENCES_REFRESH_TOKEN))
                     refreshToken = getDecryptedString(mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, ""));
-                System.out.println(accessToken);
-                System.out.println(refreshToken);
             }
         }
         catch (Throwable e) {
@@ -111,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-
 
     @Override
     protected void onStart() {
@@ -171,12 +158,6 @@ public class MainActivity extends AppCompatActivity {
                         .setPrettyPrinting()
                         .create();
                 AccessTokenResponse accessTokenResponse = gson.fromJson(response.body().string(), AccessTokenResponse.class);
-                System.out.println(accessTokenResponse.getAccess_token());
-                System.out.println(accessTokenResponse.getExpires_in());
-                System.out.println(accessTokenResponse.getRefresh_token());
-                System.out.println(accessTokenResponse.getScope());
-                System.out.println(accessTokenResponse.getToken_type());
-
                 SharedPreferences.Editor edit = mSettings.edit();
                 if (accessTokenResponse.getAccess_token()!=null) {
                     accessToken = accessTokenResponse.getAccess_token();
@@ -190,21 +171,8 @@ public class MainActivity extends AppCompatActivity {
                 }
                 edit.apply();
 
-//                if (refreshToken!=null) {
                 Intent intent = new Intent(context, BookSearchActivity.class);
                 startActivity(intent);
-//                }
-//                else
-//                    Toast.makeText(context, "Refresh token is empty", Toast.LENGTH_LONG).show();
-
-
-//                System.out.println("ACCESS: "+ mSettings.getString(APP_PREFERENCES_ACCESS_TOKEN, "нихуа"));
-//                System.out.println("REFRESH: "+ mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, "нихуа"));
-//                byte[] array = Base64.decode(mSettings.getString(APP_PREFERENCES_REFRESH_TOKEN, "нихуа"), Base64.NO_WRAP);
-//                final byte[] decryptedBytes = rsaDecrypt(array);
-//                final String decryptedString = new String(decryptedBytes, "UTF-8");
-//                System.out.println("REFRESH_DECRYPTED: "+ decryptedString);
-//                System.out.println("СОВПАЛО!!!! "+decryptedString.equals("1//0cYyWCJMLVpSMCgYIARAAGAwSNwF-L9IrQnhWrKh2EFvaDF7ssNpFSRJqKfWiU-SGNjXjvJII-Q1PZADCKSeedscY42gdsiCEEoo"));
             }
         });
 

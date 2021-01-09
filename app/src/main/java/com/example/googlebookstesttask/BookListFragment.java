@@ -17,9 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.googlebookstesttask.Model.BooksApiResponse;
 import com.example.googlebookstesttask.Utils.IRefreshAccessToken;
-import com.example.googlebookstesttask.Utils.RetrofitService;
 import com.jakewharton.retrofit2.adapter.rxjava2.HttpException;
-import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -28,12 +26,11 @@ import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.schedulers.Schedulers;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
+import static com.example.googlebookstesttask.BookSearchActivity.mCompositeDisposable;
+import static com.example.googlebookstesttask.BookSearchActivity.retrofitService;
 import static com.example.googlebookstesttask.MainActivity.accessToken;
 import static com.example.googlebookstesttask.Utils.AnyUtils.getNewAccessToken;
 
@@ -42,8 +39,6 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     private RecyclerView recyclerView;
     private BookListAdapter adapter;
     private SearchView searchView;
-    public static CompositeDisposable mCompositeDisposable;
-    public static RetrofitService retrofitService;
     private String textToSearch;
 
     public BookListFragment() {
@@ -62,15 +57,8 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
         super.onCreate(savedInstanceState);
         if (getArguments() != null)
             counter = getArguments().getInt("counter");
-        mCompositeDisposable = new CompositeDisposable();
         if (counter==0)
             setHasOptionsMenu(true);
-        retrofitService = new Retrofit.Builder()
-                .baseUrl("https://www.googleapis.com/")
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-                .create(RetrofitService.class);
     }
 
     @Override
@@ -84,8 +72,7 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_book_list, container, false);
-        return view;
+        return inflater.inflate(R.layout.fragment_book_list, container, false);
     }
 
     @Override
@@ -125,30 +112,21 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io());
 
-        mCompositeDisposable.add(Observable.zip(search, favourites, new BiFunction<BooksApiResponse, BooksApiResponse, BooksApiResponse>() {
-            @io.reactivex.annotations.NonNull
-            @Override
-            public BooksApiResponse apply(@NotNull BooksApiResponse searchResponse, @NotNull BooksApiResponse favouritesResponse) throws Exception {
-                List<String> favouritesIds = new ArrayList();
-                if (favouritesResponse.getItems()!=null && !favouritesResponse.getItems().isEmpty()) {
-                    for (BooksApiResponse.BookItem item : favouritesResponse.getItems())
-                        favouritesIds.add(item.getId());
-                }
-                for (BooksApiResponse.BookItem item1: searchResponse.getItems()) {
-                    if (favouritesIds.contains(item1.getId()))
-                        item1.setIfInFavourites(true);
-                }
-                return searchResponse;
+        mCompositeDisposable.add(Observable.zip(search, favourites, (searchResponse, favouritesResponse) -> {
+            List<String> favouritesIds = new ArrayList<>();
+            if (favouritesResponse.getItems()!=null && !favouritesResponse.getItems().isEmpty()) {
+                for (BooksApiResponse.BookItem item : favouritesResponse.getItems())
+                    favouritesIds.add(item.getId());
             }
+            for (BooksApiResponse.BookItem item1: searchResponse.getItems()) {
+                if (favouritesIds.contains(item1.getId()))
+                    item1.setIfInFavourites(true);
+            }
+            return searchResponse;
         })
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
                 .subscribe(this::handleResponse, this::handleError));
-
-//        mCompositeDisposable.add(retrofitService.getBooks("Bearer "+accessToken, textToSearch)
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribeOn(Schedulers.io())
-//                .subscribe(this::handleResponse, this::handleError));
     }
 
     private void loadFavourites() {
@@ -161,7 +139,6 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     private void handleResponse(BooksApiResponse booksApiResponse) {
         if (booksApiResponse.getItems()==null)
             booksApiResponse = new BooksApiResponse();
-
         if (adapter == null) {
             adapter = new BookListAdapter(getContext(), booksApiResponse);
             recyclerView.setAdapter(adapter);
@@ -181,19 +158,13 @@ public class BookListFragment extends Fragment implements IRefreshAccessToken {
     }
 
     private void handleError(Throwable error) {
-        Toast.makeText(getContext(), "Error "+error.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
         if (error instanceof HttpException) {
             HttpException exception = (HttpException) error;
-            if (exception.code() == 401) {
+            if (exception.code() == 401)
                 getNewAccessToken(getContext(), this);
-            }
+            else
+                Toast.makeText(getContext(), "Error "+error.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mCompositeDisposable.clear();
     }
 
     @Override

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "991168137299",
+    "project_id": "potent-howl-298907",
+    "storage_bucket": "potent-howl-298907.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:991168137299:android:c1d00416c73d0cf776dea6",
+        "android_client_info": {
+          "package_name": "com.example.googlebookstesttask"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "991168137299-9o5mgdfs68v8c1c0k2ns4rj7bk4g8poo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.googlebookstesttask",
+            "certificate_hash": "a5d9c681966f72ea3ac6d3ed7136f8c1c5019213"
+          }
+        },
+        {
+          "client_id": "991168137299-klcd0abkbclpe5rcnk96sari4ucl47v2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbcy0hf8n1zJX-w9NBYNzf3gQPndR24rg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "991168137299-klcd0abkbclpe5rcnk96sari4ucl47v2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
